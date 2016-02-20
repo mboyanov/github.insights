@@ -1,14 +1,25 @@
 package org.nlp.github.insights;
 
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class GitComment {
 
+    private String sha;
+    public String getSha() {
+        return sha;
+    }
+
+    public void setSha(String sha) {
+        this.sha = sha;
+    }
+
     private String author, shortMessage, fullMessage;
     @JsonProperty("diffs")
     private List<GitDiff> diffs;
+    private Set<String> keywords;
 
     public String getAuthor() {
         return author;
@@ -41,6 +52,14 @@ public class GitComment {
 
     public List<GitDiff> getDiffs() {
         return diffs;
+    }
+
+    public void setKeywords(Set<String> keyWords) {
+        this.keywords = keyWords;
+    }
+
+    public Set<String> getKeywords() {
+        return keywords;
     }
 
 }

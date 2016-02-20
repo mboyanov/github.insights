@@ -19,14 +19,16 @@ import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 import org.nlp.github.insights.db.LuceneDb;
+import org.nlp.github.insights.files.FilesDb;
 import org.nlp.github.insights.server.Server;
+import org.nlp.github.insights.topics.TopicsDb;
 import org.nlp.github.insights.users.UserDb;
 
 public class GitInsights {
 
     private static String REMOTE_URL = "https://github.com/apifest/apifest.git";
     private static String REMOTE_URL2 = "https://github.com/apache/lucene-solr.git";
-    private static File localPath = new File("Work Directory");
+    private static File localPath = new File("/home/martin/marty_projects/node");
 
 
     public static void main(String[] args) {
@@ -38,12 +40,19 @@ public class GitInsights {
         }
         LuceneDb index = LuceneDb.getInstance();
         UserDb users = UserDb.getInstance();
+        FilesDb files = FilesDb.getInstance();
         try (Git git = getGit(path)) {
             System.out.println("Having repository: " + git.getRepository().getDirectory());
             Iterable<RevCommit> commits = git.log().all().call();
             List<GitComment> comments = StreamSupport.stream(commits.spliterator(), true).map(commit -> processCommit(git, commit)).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+            System.out.println("Repository parsed. Total commits: " + comments.size());
+            TopicsDb topics = new TopicsDb(new CommentSerializer());
+            topics.process(comments);
+            System.out.println("Keywords extracted");
             index.addDocuments(comments);
+            System.out.println("Commits indexed");
             users.processComments(comments);
+            files.processComments(comments);
             git.getRepository().close();
             Server server = new Server();
             server.start();
@@ -76,6 +85,7 @@ public class GitInsights {
             com.setAuthor(commit.getAuthorIdent().getEmailAddress());
             com.setFullMessage(commit.getFullMessage());
             com.setShortMessage(commit.getShortMessage());
+            com.setSha(commit.getId().toString());
             List<DiffEntry> diffs = getDiff(git, commit);
             com.setDiffs(diffs.stream()
                     .map(toGitDiff())

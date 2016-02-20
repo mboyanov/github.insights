@@ -7,13 +7,14 @@ import java.util.stream.Collectors;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -27,6 +28,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class LuceneDb {
 
+    private static final int AUTHOR_BOOST = 50;
+    private static final int SHORT_MSG_BOOST = 2;
+    private static final float TOPICS_BOOST = 5;
+    private static final float SHA_BOOST = 50;
     private Analyzer analyzer;
     private RAMDirectory index;
     private IndexWriterConfig config;
@@ -52,8 +57,19 @@ public class LuceneDb {
         List<Document> docs = comments.stream().map(comment-> {
             Document doc = new Document();
             doc.add(new TextField("full", comment.getFullMessage(), Store.YES));
-            doc.add(new TextField("short", comment.getShortMessage(), Store.YES));
-            doc.add(new StringField("author", comment.getAuthor(), Store.YES));
+            TextField tf = new TextField("short", comment.getShortMessage(), Store.YES);
+            tf.setBoost(SHORT_MSG_BOOST);
+            doc.add(tf);
+            tf = new TextField("author", comment.getAuthor(), Store.YES);
+            tf.setBoost(AUTHOR_BOOST);
+            doc.add(tf);
+            tf = new TextField("sha", comment.getSha(), Store.YES);
+            tf.setBoost(SHA_BOOST);
+            doc.add(tf);
+            tf = new TextField("topics", String.join(" ", comment.getKeywords()), Store.YES);
+            tf.setBoost(TOPICS_BOOST);
+            doc.add(tf);
+
             try {
                 doc.add(new TextField("diffs", om.writeValueAsString(comment.getDiffs()), Store.YES));
             } catch (Exception e) {
@@ -73,13 +89,16 @@ public class LuceneDb {
         // when no field is explicitly specified in the query.
         Query q = null;
         try {
-            q = new QueryParser("full", analyzer).parse(querystr);
+            q = new BooleanQuery.Builder().add(new QueryParser("full", analyzer).parse(querystr), Occur.SHOULD)
+                    .add(new QueryParser("short", analyzer).parse(querystr), Occur.SHOULD)
+                    .add(new QueryParser("diffs", analyzer).parse(querystr), Occur.SHOULD)
+                    .add(new QueryParser("author", analyzer).parse(querystr), Occur.SHOULD).build();
         } catch (org.apache.lucene.queryparser.classic.ParseException e) {
             e.printStackTrace();
         }
 
         // 3. search
-        int hitsPerPage = 10;
+        int hitsPerPage = 20;
         IndexReader reader = DirectoryReader.open(index);
         IndexSearcher searcher = new IndexSearcher(reader);
         TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage);
@@ -97,6 +116,7 @@ public class LuceneDb {
             comment.setAuthor(d.get("author"));
             comment.setFullMessage(d.get("full"));
             comment.setShortMessage(d.get("short"));
+            comment.setSha(d.get("sha"));
             List<GitDiff> diffs = om.readValue(d.get("diffs"), new TypeReference<List<GitDiff>>(){});
             comment.setDiffs(diffs);
             result.add(comment);
@@ -113,5 +133,8 @@ public class LuceneDb {
         index.close();
         analyzer.close();
     }
+
+
+
 }
 

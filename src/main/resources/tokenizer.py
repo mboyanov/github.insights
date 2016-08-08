@@ -4,7 +4,6 @@ import re
 class GeneratingTokenizer(TokenizerI):
 
 
-
 	def __init__(self, stopwords=[]):
 		self.stopwords = stopwords
 		self.scanner = re.Scanner([

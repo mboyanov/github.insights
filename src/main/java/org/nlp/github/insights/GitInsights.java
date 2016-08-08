@@ -34,7 +34,7 @@ public class GitInsights {
     public static void main(String[] args) {
         String path = "";
         if (args.length > 0) {
-            sanitizePath(args);
+            path = sanitizePath(args);
         } else {
             path= localPath.getPath()+"/.git";
         }
@@ -55,7 +55,7 @@ public class GitInsights {
             files.processComments(comments);
             git.getRepository().close();
             Server server = new Server();
-            server.start();
+            server.start(args[1], Integer.parseInt(args[2]));
         } catch (InvalidRemoteException e) {
             e.printStackTrace();
         } catch (TransportException e) {
@@ -68,10 +68,11 @@ public class GitInsights {
 
     }
 
-    private static void sanitizePath(String[] args) {
+    private static String sanitizePath(String[] args) {
         String path;
         path = args[0];
         path = path.endsWith(".git") ? path : path+".git";
+        return path;
     }
 
     private static Git getGit(String path) throws IOException, InvalidRemoteException, TransportException, GitAPIException {

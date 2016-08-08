@@ -16,7 +16,7 @@ import org.reflections.Reflections;
 public class Server {
 
 
-    public void start() {
+    public void start(String host, int port) {
 
         ResteasyDeployment red = new ResteasyDeployment();
         red.setActualResourceClasses(getRestEasyResources());
@@ -25,8 +25,8 @@ public class Server {
 
         netty.setExecutorThreadCount(99);
         netty.setDeployment(red);
-        netty.setHostname("0.0.0.0");
-        netty.setPort(1337);
+        netty.setHostname(host);
+        netty.setPort(port);
         netty.setRootResourcePath("");
         netty.setSecurityDomain(null);
 

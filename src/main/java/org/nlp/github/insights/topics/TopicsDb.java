@@ -21,7 +21,7 @@ public class TopicsDb {
 
     private CommentSerializer serializer;
     private ObjectMapper om;
-    private static final Pattern p = Pattern.compile("(^|\\s)0\\.\\d+\\*\\\"([^\"]+)\\\"");
+    private static final Pattern pattern = Pattern.compile("(^|\\s)0\\.\\d+\\*\\\"([^\"]+)\\\"");
 
 
     public TopicsDb(CommentSerializer serializer) {
@@ -48,7 +48,7 @@ public class TopicsDb {
     }
 
     private void categorizeComments(List<GitComment> comments) throws IOException {
-        Process p = Runtime.getRuntime().exec("python src/main/resources/topicModel.py");
+        Process p = Runtime.getRuntime().exec("python topicModel.py");
         BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
         String line = null;
         int index = 0;
@@ -63,7 +63,7 @@ public class TopicsDb {
     private Set<String> extractKeywords(List<String> topics) {
         Set<String> kw = new HashSet<>();
         for (String topic: topics) {
-            Matcher m = p.matcher(topic);
+            Matcher m = pattern.matcher(topic);
             while (m.find()){
                 kw.add(m.group(2));
             }

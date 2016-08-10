@@ -8,7 +8,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class CommentSerializer {
-    private static final String FILE_NAME = "src/main/resources/comments.json";
+    private static final String FILE_NAME = "comments.json";
     private static final ObjectMapper MAPPER = new ObjectMapper();
     public void serialize(List<GitComment> comments) {
         File f = new File(FILE_NAME);

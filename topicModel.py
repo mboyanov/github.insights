@@ -5,7 +5,7 @@ from nltk.tokenize import RegexpTokenizer
 from tokenizer import GeneratingTokenizer
 import operator
 
-filename = "/home/martin/marty_projects/git insights/github.insights/src/main/resources/comments.json"
+filename = "comments.json"
 
 stop = set(stopwords.words('english')).union(set(["trunk","s","t"]))
 

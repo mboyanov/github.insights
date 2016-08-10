@@ -42,6 +42,7 @@ class RegexTokenizer():
 
 	def tokenize(self, input):
 		res = [input]
+		matches = self.regex.match(input)
 		res = res + list(self.regex.match(input).groups())
 		return res
 
@@ -54,7 +55,7 @@ class EmailTokenizer(RegexTokenizer):
 class URLTokenizer(RegexTokenizer):
 
 	def __init__(self):
-		self.regex = re.compile(ur"https?:\/\/([^\/]+)\.[^\s]+")
+		self.regex = re.compile(ur"https?:\/\/([^\/]+).*")
 
 class IgnoreTokenizer(RegexTokenizer):
 
@@ -70,12 +71,12 @@ assert("mboyanov@gmail.com" in tokens)
 
 ut = URLTokenizer()
 tokens  = ut.tokenize("http://google.com")
-assert("google" in tokens)
+assert("google.com" in tokens)
 
 gt = GeneratingTokenizer()
 tokens = gt.tokenize("jane@example.com knows how to access http://google.com")
 assert("jane" in tokens)
-assert("google" in tokens)
+assert("google.com" in tokens)
 assert("http://google.com" in tokens)
 
 

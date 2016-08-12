@@ -46,9 +46,11 @@ public class GitInsights {
             Iterable<RevCommit> commits = git.log().all().call();
             List<GitComment> comments = StreamSupport.stream(commits.spliterator(), true).map(commit -> processCommit(git, commit)).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
             System.out.println("Repository parsed. Total commits: " + comments.size());
-            TopicsDb topics = new TopicsDb(new CommentSerializer());
-            topics.process(comments);
-            System.out.println("Keywords extracted");
+            if (args.length <= 3 || !args[3].equals("skipTopics")) {
+                TopicsDb topics = new TopicsDb(new CommentSerializer());
+                topics.process(comments);
+                System.out.println("Keywords extracted");
+            }
             index.addDocuments(comments);
             System.out.println("Commits indexed");
             users.processComments(comments);

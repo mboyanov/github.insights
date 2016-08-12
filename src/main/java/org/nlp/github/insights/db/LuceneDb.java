@@ -66,10 +66,11 @@ public class LuceneDb {
             tf = new TextField("sha", comment.getSha(), Store.YES);
             tf.setBoost(SHA_BOOST);
             doc.add(tf);
-            tf = new TextField("topics", String.join(" ", comment.getKeywords()), Store.YES);
-            tf.setBoost(TOPICS_BOOST);
-            doc.add(tf);
-
+            if (comment.getKeywords() != null) {
+                tf = new TextField("topics", String.join(" ", comment.getKeywords()), Store.YES);
+                tf.setBoost(TOPICS_BOOST);
+                doc.add(tf);
+            }
             try {
                 doc.add(new TextField("diffs", om.writeValueAsString(comment.getDiffs()), Store.YES));
             } catch (Exception e) {
